@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>힘의 표현과 평형 가상실험실</title>
+<style>
+:root{
+  --ink:#1d2433; --muted:#5d667a; --bg:#f3f5f9; --surface:#ffffff; --line:#e2e7f0; --soft:#eef2fa;
+  --primary:#2f4bd8; --primary-d:#2239b0; --primary-soft:#e8ecfd;
+  --fa:#e4572e; --fa-soft:#fdece6; --fb:#0f9d8a; --fb-soft:#e3f6f3; --net:#8a3ffc; --net-soft:#f1e9ff;
+  --ok:#1e9e6b; --ok-soft:#e6f7ef; --no:#d64545; --no-soft:#fdeaea; --warn:#c77d00; --warn-soft:#fff5dc;
+  --wood:#d9a15f; --wood-d:#a8702f;
+  --radius:18px; --shadow:0 6px 22px rgba(29,36,51,.07);
+  --font:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-text-size-adjust:100%}
+body{overflow-x:hidden}
+button{font-family:var(--font);cursor:pointer;-webkit-tap-highlight-color:transparent;color:inherit}
+input,textarea{font-family:var(--font)}
+#app{max-width:980px;margin:0 auto;padding:14px 16px 90px}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(243,245,249,.94);backdrop-filter:blur(6px);padding:10px 0 12px;margin-bottom:8px}
+.topbar .ttl{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px}
+.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.step{border:none;background:none;padding:0;text-align:center}
+.step .bar{display:block;height:7px;border-radius:4px;background:#d8dfeb;transition:background .3s}
+.step .lb{display:block;font-size:12px;color:var(--muted);margin-top:5px;font-weight:600}
+.step.done .bar{background:var(--fb)}
+.step.active .bar{background:var(--primary)}
+.step.active .lb{color:var(--primary);font-weight:800}
+
+.screen{display:none;animation:fade .35s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+h1{font-size:clamp(25px,4.6vw,36px);margin:6px 0 8px;letter-spacing:-.5px}
+h2{font-size:clamp(21px,3.6vw,27px);margin:6px 0 10px;letter-spacing:-.3px}
+h3{font-size:18px;margin:0 0 8px}
+p{line-height:1.7;margin:6px 0}
+.muted{color:var(--muted)}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.btn{border:none;border-radius:14px;padding:14px 24px;font-size:17px;font-weight:800;color:#fff;background:var(--primary);min-height:52px;transition:transform .1s,background .2s}
+.btn:active{transform:scale(.97);background:var(--primary-d)}
+.btn.ghost{background:var(--surface);color:var(--primary);box-shadow:inset 0 0 0 2px var(--primary)}
+.btn.small{padding:10px 16px;font-size:15px;min-height:44px}
+.btn:disabled{opacity:.45}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-top:22px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--primary-soft);color:var(--primary);font-size:13px;font-weight:700;margin:3px 4px 3px 0}
+.tag{display:inline-block;font-size:12px;font-weight:800;padding:3px 9px;border-radius:8px;background:var(--soft);color:var(--muted)}
+
+/* ---------- intro ---------- */
+.hero{background:linear-gradient(135deg,#2f4bd8 0%,#5b3fd6 60%,#8a3ffc 100%);color:#fff;border-radius:24px;padding:30px 26px;position:relative;overflow:hidden}
+.hero p{color:rgba(255,255,255,.9)}
+.hero .chip{background:rgba(255,255,255,.18);color:#fff}
+.hero svg.bg{position:absolute;right:-20px;bottom:-20px;opacity:.22;width:300px;max-width:55%}
+.goal-list{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.goal-list li{display:flex;gap:12px;align-items:flex-start;background:var(--soft);border-radius:14px;padding:13px 15px;line-height:1.55}
+.goal-list .n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:6px}
+.flow div{background:var(--soft);border-radius:12px;padding:10px 4px;text-align:center;font-size:13px;font-weight:700;color:var(--muted)}
+.flow b{display:block;font-size:20px;margin-bottom:2px}
+
+/* ---------- concept ---------- */
+.big-idea{border-radius:20px;padding:20px 22px;background:linear-gradient(120deg,#fff7e6,#fff);box-shadow:var(--shadow);border-left:7px solid #f2a93b;margin-bottom:18px}
+.big-idea .k{font-size:13px;font-weight:900;color:#b86e00;letter-spacing:1px}
+.big-idea p{font-size:18px;font-weight:700;color:var(--ink);margin:6px 0 0;line-height:1.6}
+.acc{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.acc-h{width:100%;display:flex;align-items:center;gap:12px;padding:17px 18px;background:none;border:none;text-align:left;font-size:17px;font-weight:800;min-height:60px}
+.acc-h .num{flex:none;width:32px;height:32px;border-radius:10px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:900}
+.acc-h .arr{margin-left:auto;transition:transform .25s;color:var(--muted)}
+.acc.open .acc-h .arr{transform:rotate(180deg)}
+.acc-b{display:none;padding:0 18px 20px}
+.acc.open .acc-b{display:block;animation:fade .3s}
+.fig{background:var(--soft);border-radius:14px;padding:12px;margin:10px 0}
+.fig svg{width:100%;height:auto;display:block}
+.effect-btns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.seg{display:inline-flex;background:var(--soft);border-radius:12px;padding:4px;gap:4px;flex-wrap:wrap}
+.seg button{border:none;background:none;padding:9px 14px;border-radius:9px;font-weight:700;font-size:15px;min-height:42px;color:var(--muted)}
+.seg button.on{background:var(--surface);color:var(--primary);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.mis{display:grid;gap:10px}
+.mis .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mis .x,.mis .o{border-radius:14px;padding:12px 14px;line-height:1.55;font-size:15px}
+.mis .x{background:var(--no-soft)}
+.mis .o{background:var(--ok-soft)}
+.mis .hd{display:block;font-size:13px;font-weight:800;margin-bottom:3px}
+.mis .x .hd{color:var(--no)} .mis .o .hd{color:var(--ok)}
+.cond{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.cond div{background:var(--net-soft);border-radius:14px;padding:12px;text-align:center;font-weight:800;color:#5a22c4}
+.cond small{display:block;font-weight:500;color:var(--muted);margin-top:3px}
+
+/* clay / sled / ball animations */
+.anim-stage{height:170px}
+#clay{transform-origin:50% 100%;transform-box:fill-box}
+.play-clay #clay{animation:squash 1.6s ease forwards}
+.play-clay #hand1{animation:press 1.6s ease forwards}
+@keyframes squash{0%,30%{transform:scale(1,1)}70%,100%{transform:scale(1.35,.62)}}
+@keyframes press{0%{transform:translateY(-30px)}30%{transform:translateY(0)}70%,100%{transform:translateY(28px)}}
+.play-sled #sled{animation:slide 2.4s cubic-bezier(.55,0,.8,.4) forwards}
+@keyframes slide{0%{transform:translateX(0)}100%{transform:translateX(330px)}}
+.play-ball #ball{animation:bounce 2s linear forwards}
+@keyframes bounce{0%{transform:translate(0,0)}45%{transform:translate(250px,0)}100%{transform:translate(20px,-110px)}}
+
+/* ---------- explore ---------- */
+.tabs{display:flex;gap:6px;background:#e3e8f2;padding:5px;border-radius:16px;margin-bottom:16px;overflow-x:auto}
+.tabs button{flex:1;min-width:max-content;border:none;background:none;border-radius:12px;padding:11px 14px;font-weight:800;font-size:15px;color:var(--muted);min-height:46px}
+.tabs button.on{background:var(--surface);color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.tabp{display:none}
+.tabp.on{display:block;animation:fade .3s}
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.plan-item{background:var(--soft);border-radius:14px;padding:14px}
+.plan-item h4{margin:0 0 6px;font-size:15px;color:var(--primary)}
+.plan-item ul,.plan-item ol{margin:0;padding-left:20px;line-height:1.7}
+.var-t{width:100%;border-collapse:collapse;font-size:15px}
+.var-t td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.var-t td:first-child{font-weight:800;white-space:nowrap;color:var(--muted);width:92px}
+textarea.note{width:100%;min-height:74px;border-radius:12px;border:1.5px solid var(--line);padding:11px 13px;font-size:15px;line-height:1.6;resize:vertical;background:#fcfdff}
+textarea.note:focus{outline:none;border-color:var(--primary)}
+.saved{font-size:12px;color:var(--ok);margin-left:6px;opacity:0;transition:opacity .3s}
+.saved.on{opacity:1}
+
+.lab{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start}
+.canvas-wrap{background:#fff;border-radius:16px;box-shadow:inset 0 0 0 1.5px var(--line);overflow:hidden;position:relative}
+canvas{display:block;width:100%;height:auto;touch-action:none}
+.ctrl{display:grid;gap:14px}
+.ctrl label{font-weight:800;font-size:15px;display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.ctrl label output{font-size:20px;color:var(--primary);font-weight:900}
+input[type=range]{width:100%;height:40px;accent-color:var(--primary);margin:0}
+.dir-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dir-grid button{border:none;background:var(--soft);border-radius:10px;font-size:20px;min-height:44px;font-weight:800}
+.dir-grid button.on{background:var(--primary);color:#fff}
+.readout{background:var(--soft);border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.7}
+.readout b{font-size:17px}
+.status{border-radius:14px;padding:13px 15px;font-weight:800;font-size:16px;line-height:1.5;margin-top:12px;display:flex;gap:10px;align-items:center}
+.status.eq{background:var(--ok-soft);color:#0f7a51}
+.status.mv{background:var(--warn-soft);color:#8a5600}
+.status.rot{background:var(--no-soft);color:#a52d2d}
+.status .ic{font-size:24px;flex:none}
+.forcebox{border-radius:14px;padding:12px;display:grid;gap:8px}
+.forcebox.a{background:var(--fa-soft)} .forcebox.b{background:var(--fb-soft)}
+.forcebox .h{font-weight:900;display:flex;justify-content:space-between;align-items:center}
+.forcebox.a .h{color:var(--fa)} .forcebox.b .h{color:var(--fb)}
+.forcebox.a input[type=range]{accent-color:var(--fa)} .forcebox.b input[type=range]{accent-color:var(--fb)}
+.lr{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.lr button{border:none;border-radius:10px;background:#fff;min-height:42px;font-weight:800;font-size:15px}
+.forcebox.a .lr button.on{background:var(--fa);color:#fff}
+.forcebox.b .lr button.on{background:var(--fb);color:#fff}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.presets button{border:none;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--line);border-radius:12px;padding:9px 13px;font-weight:700;font-size:14px;min-height:42px}
+.presets button:active{background:var(--soft)}
+.task{background:linear-gradient(120deg,var(--primary-soft),#fff);border-radius:14px;padding:13px 15px;font-weight:800;line-height:1.55}
+.task .big{font-size:18px;color:var(--primary)}
+.grade{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.grade div{border-radius:10px;padding:8px 4px;text-align:center;font-weight:800;font-size:14px;background:var(--soft);color:var(--muted)}
+.grade .ok{background:var(--ok-soft);color:var(--ok)} .grade .no{background:var(--no-soft);color:var(--no)}
+.fb{font-size:15px;line-height:1.6;margin-top:8px}
+table.rec{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+table.rec th{background:var(--soft);color:var(--muted);font-weight:800;padding:8px 6px;text-align:center}
+table.rec td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center}
+.rec-wrap{overflow-x:auto}
+.warnline{font-size:14px;color:var(--warn);font-weight:700;min-height:20px;margin-top:6px}
+
+/* ---------- sticker ---------- */
+.stk-status{display:flex;gap:10px;flex-wrap:wrap;font-weight:800;font-size:14px;color:var(--muted);margin:4px 0 10px}
+.stk-status span{background:var(--surface);border-radius:999px;padding:6px 12px;box-shadow:var(--shadow)}
+.board{position:relative}
+.board1{background:var(--soft);border-radius:16px;padding:8px}
+.board1 svg{width:100%;height:auto;display:block}
+.board1 .slot{position:absolute;transform:translate(-50%,-50%)}
+.tray{display:flex;flex-wrap:wrap;gap:10px;min-height:70px;padding:12px;border-radius:16px;background:repeating-linear-gradient(45deg,#fbfcfe,#fbfcfe 10px,#f4f6fb 10px,#f4f6fb 20px);box-shadow:inset 0 0 0 1.5px var(--line);margin-top:12px;align-items:center}
+.tray-lb{font-size:13px;font-weight:800;color:var(--muted);width:100%;margin-bottom:-2px}
+.sticker{border:none;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:800;min-height:46px;background:#fff6cf;box-shadow:0 3px 0 rgba(120,90,0,.18),0 1px 0 rgba(255,255,255,.8) inset;transform:rotate(var(--tilt,0deg));transition:transform .15s,box-shadow .15s;line-height:1.35;text-align:left;position:relative}
+.sticker.card2{background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.1),inset 0 0 0 1.5px #e7e0c4;font-weight:700;font-size:14px;max-width:260px}
+.sticker.trap{background:#ffe1ec}
+.sticker.picked{transform:rotate(0) scale(1.07);box-shadow:0 10px 20px rgba(0,0,0,.18);outline:3px solid var(--primary);z-index:3}
+.sticker.good::after,.sticker.bad::after{position:absolute;top:-9px;right:-9px;width:22px;height:22px;border-radius:50%;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
+.sticker.good::after{content:'✔';background:var(--ok)}
+.sticker.bad::after{content:'✖';background:var(--no)}
+.sticker.bad{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.slot{min-height:50px;min-width:118px;border:2.5px dashed #b4bfd3;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:4px;background:rgba(255,255,255,.75);transition:all .2s;font-size:13px;color:var(--muted);font-weight:700}
+.slot.ready{border-color:var(--primary);background:rgba(232,236,253,.95);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(47,75,216,.15)}}
+.slot .sticker{--tilt:0deg}
+.board1 .slot::before{content:attr(data-n);flex:none;width:22px;height:22px;border-radius:50%;background:#2f4bd8;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;margin-right:6px}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bin{border-radius:16px;padding:12px;min-height:200px}
+.bin.eq{background:var(--ok-soft)} .bin.neq{background:var(--warn-soft)}
+.bin h4{margin:0 0 8px;font-size:17px;display:flex;align-items:center;gap:8px}
+.bin .slot{min-height:150px;align-items:flex-start;justify-content:flex-start;flex-wrap:wrap;gap:8px;padding:10px;align-content:flex-start;width:100%}
+.hints{margin-top:10px;display:grid;gap:6px}
+.hints div{background:var(--warn-soft);border-radius:10px;padding:9px 12px;font-size:14px;line-height:1.55}
+.done-stamp{display:none;align-items:center;gap:12px;margin-top:12px;background:var(--ok-soft);border-radius:14px;padding:12px 14px;font-weight:800;color:#0f7a51;line-height:1.5}
+.done-stamp.on{display:flex;animation:stamp .5s cubic-bezier(.2,1.6,.4,1)}
+.done-stamp .st{flex:none;width:58px;height:58px;border-radius:50%;border:4px solid var(--no);color:var(--no);display:flex;align-items:center;justify-content:center;font-weight:900;transform:rotate(-14deg);font-size:15px}
+@keyframes stamp{from{transform:scale(1.4);opacity:0}to{transform:none;opacity:1}}
+
+/* ---------- life ---------- */
+.life{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.life .card{margin:0;display:flex;flex-direction:column}
+.life .ico{font-size:34px;line-height:1}
+.life h3{margin:8px 0 4px}
+.life p{font-size:15px;color:var(--muted);flex:1}
+.life .tag{align-self:flex-start;background:var(--net-soft);color:#5a22c4;margin-top:6px}
+
+/* ---------- quiz ---------- */
+.qbar{height:8px;border-radius:4px;background:#d8dfeb;overflow:hidden;margin-bottom:14px}
+.qbar i{display:block;height:100%;background:var(--fb);width:0;transition:width .3s}
+.qhead{display:flex;justify-content:space-between;color:var(--muted);font-weight:800;font-size:14px}
+.qtext{font-size:19px;font-weight:800;line-height:1.6;margin:8px 0 12px}
+.qfig{background:var(--soft);border-radius:14px;padding:10px;margin-bottom:12px}
+.qfig svg{width:100%;height:auto;display:block;max-height:180px}
+.choice{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:10px;font-size:16px;min-height:56px;line-height:1.5}
+.choice .m{flex:none;width:28px;height:28px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--muted)}
+.choice.correct{border-color:var(--ok);background:var(--ok-soft)}
+.choice.correct .m{background:var(--ok);color:#fff}
+.choice.wrong{border-color:var(--no);background:var(--no-soft)}
+.choice.wrong .m{background:var(--no);color:#fff}
+.expl{display:none;border-radius:14px;padding:14px 16px;font-size:15px;line-height:1.7;margin-top:4px}
+.expl.show{display:block;animation:fade .3s}
+.expl.ok{background:var(--ok-soft)} .expl.no{background:var(--no-soft)}
+.score{font-size:60px;font-weight:900;color:var(--primary);line-height:1}
+.checklist label{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--soft);margin-bottom:8px;font-size:15px;line-height:1.5;cursor:pointer}
+.checklist input{width:24px;height:24px;accent-color:var(--ok);flex:none}
+.wronglist div{background:var(--no-soft);border-radius:10px;padding:9px 12px;margin-bottom:6px;font-size:14px;line-height:1.5}
+
+footer{position:fixed;left:0;right:0;bottom:0;text-align:center;font-size:12px;color:var(--muted);padding:9px 0;background:linear-gradient(to top,var(--bg) 65%,rgba(243,245,249,0));pointer-events:none;letter-spacing:.3px}
+
+@media (max-width:900px){.lab{grid-template-columns:1fr}}
+@media (max-width:600px){
+  .board1 .slot-layer{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .board1 .slot{position:static;transform:none;min-width:0;width:100%}
+}
+@media (max-width:760px){
+  .plan-grid{grid-template-columns:1fr}
+  .mis .row{grid-template-columns:1fr}
+  .cond{grid-template-columns:1fr}
+  .flow{grid-template-columns:repeat(3,1fr)}
+  .bins{grid-template-columns:1fr}
+  .step .lb{font-size:11px}
+  .card{padding:16px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="topbar">
+  <div class="ttl"><span>과학 1 · Ⅴ. 힘의 작용 — 1. 힘의 표현 · 2. 힘의 평형</span><span id="stepName">도입</span></div>
+  <div class="steps" id="steps"></div>
+</div>
+
+<!-- ================= 1. 도입 ================= -->
+<section class="screen active" id="screen-intro">
+  <div class="hero">
+    <svg class="bg" viewBox="0 0 300 200" aria-hidden="true"><rect x="100" y="70" width="100" height="60" rx="8" fill="#fff"/><path d="M100 100H20" stroke="#fff" stroke-width="10"/><path d="M20 100l22-14v28z" fill="#fff"/><path d="M200 100h80" stroke="#fff" stroke-width="10"/><path d="M280 100l-22-14v28z" fill="#fff"/></svg>
+    <div class="chip">중학교 과학 1 (미래엔)</div>
+    <h1>힘을 화살표로 그리고,<br>힘의 평형을 찾아라!</h1>
+    <p>줄다리기에서 양쪽이 힘껏 당기는데도 줄이 꼼짝하지 않는 까닭은 무엇일까요?<br>힘을 그려 보고, 두 힘을 직접 조절하며 알아봅시다.</p>
+    <div style="margin-top:12px">
+      <span class="chip">교과서 156~159쪽</span><span class="chip">지도서 274~277쪽</span><span class="chip">1~2 / 18차시</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>📌 성취기준</h3>
+    <p><b>[9과05-01]</b> 물체에 작용하는 힘을 화살표를 이용하여 나타내고, 힘의 평형을 이루는 조건을 설명할 수 있다.</p>
+    <p class="muted" style="font-size:14px">※ 이 차시에서는 한 직선 위에서 나란하게 작용하는 힘의 합력만 다룹니다.</p>
+  </div>
+
+  <div class="card">
+    <h3>🎯 학습목표</h3>
+    <ul class="goal-list">
+      <li><span class="n">1</span><span>과학에서 말하는 <b>힘의 정의</b>를 설명할 수 있다.</span></li>
+      <li><span class="n">2</span><span>물체에 작용하는 힘을 <b>화살표</b>를 이용해 나타낼 수 있다.</span></li>
+      <li><span class="n">3</span><span>나란하게 작용하는 <b>힘의 합력</b>을 구할 수 있다.</span></li>
+      <li><span class="n">4</span><span><b>힘의 평형</b>을 이루는 조건을 설명할 수 있다.</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>🧭 오늘의 흐름</h3>
+    <div class="flow">
+      <div><b>🚪</b>도입</div><div><b>💡</b>개념</div><div><b>🔬</b>탐구</div><div><b>🏷️</b>스티커</div><div><b>🌏</b>실생활</div><div><b>✅</b>문제</div>
+    </div>
+  </div>
+  <div class="btn-row" style="justify-content:center"><button class="btn" onclick="go(1)">시작하기 →</button></div>
+</section>
+
+<!-- ================= 2. 개념 ================= -->
+<section class="screen" id="screen-concept">
+  <h2>개념 알아보기</h2>
+  <div class="big-idea">
+    <div class="k">★ 핵심 아이디어</div>
+    <p>힘은 크기와 방향을 가지므로 화살표로 나타내고, 한 물체에 작용하는 두 힘의 효과가 서로 상쇄되면 힘의 평형을 이룬다.</p>
+  </div>
+
+  <div class="acc open">
+    <button class="acc-h" onclick="toggleAcc(this)"><span class="num">1</span>힘이란 무엇일까?<span class="arr">▼</span></button>
+    <div class="acc-b">
+      <p>과학에서 <b>힘</b>은 <b>물체의 모양이나 운동 상태를 변하게 하는 원인</b>이에요. 운동 상태란 물체의 <b>빠르기와 운동 방향</b>을 함께 말해요. 아래 버튼을 눌러 힘의 효과를 관찰해 보세요.</p>
+      <div class="effect-btns seg" id="effSeg">
+        <button class="on" onclick="playEffect('clay',this)">찰흙 누르기</button>
+        <button onclick="playEffect('sled',this)">썰매 밀기</button>
+        <button onclick="playEffect('ball',this)">야구공 치기</button>
+      </div>
+      <div class="fig">
+        <svg viewBox="0 0 600 180" class="anim-stage" id="effSvg">
+          <line x1="20" y1="160" x2="580" y2="160" stroke="#c7cfdd" stroke-width="3"/>
+          <g id="effClay">
+            <g id="hand1"><rect x="262" y="40" width="76" height="30" rx="12" fill="#f6c9a7"/><rect x="286" y="10" width="28" height="36" rx="10" fill="#f6c9a7"/><path d="M300 76v20" stroke="#e4572e" stroke-width="5"/><path d="M300 104l-9-14h18z" fill="#e4572e"/></g>
+            <ellipse id="clay" cx="300" cy="135" rx="55" ry="25" fill="#c98b5e"/>
+          </g>
+          <g id="effSled" style="display:none">
+            <g id="sled"><rect x="70" y="118" width="90" height="26" rx="6" fill="#4e7ad6"/><path d="M60 150h110q14 0 18-10" stroke="#27407a" stroke-width="5" fill="none"/><path d="M40 131H66" stroke="#e4572e" stroke-width="5"/><path d="M68 131l-12-8v16z" fill="#e4572e"/></g>
+          </g>
+          <g id="effBall" style="display:none">
+            <rect x="330" y="40" width="16" height="110" rx="8" fill="#a1683a" transform="rotate(18 338 95)"/>
+            <circle id="ball" cx="80" cy="110" r="15" fill="#fff" stroke="#c43" stroke-width="3"/>
+          </g>
+        </svg>
+      </div>
+      <p id="effCap" class="muted">찰흙을 누르면 <b>모양</b>이 변해요.</p>
+    </div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-h" onclick="toggleAcc(this)"><span class="num">2</span>힘의 3요소 — 크기 · 방향 · 작용점<span class="arr">▼</span></button>
+    <div class="acc-b">
+      <p>같은 물체라도 <b>얼마나 세게(크기)</b>, <b>어느 쪽으로(방향)</b>, <b>어디에(작용점)</b> 힘을 주느냐에 따라 결과가 달라져요. 이 세 가지를 힘의 3요소라고 해요.</p>
+      <div class="fig">
+        <svg viewBox="0 0 600 200">
+          <rect x="120" y="70" width="140" height="80" rx="8" fill="#d9a15f" stroke="#a8702f" stroke-width="3"/>
+          <line x1="260" y1="110" x2="480" y2="110" stroke="#e4572e" stroke-width="9"/>
+          <path d="M505 110l-30-17v34z" fill="#e4572e"/>
+          <circle cx="260" cy="110" r="9" fill="#1d2433"/>
+          <text x="238" y="170" font-size="17" font-weight="800" fill="#1d2433">① 작용점</text>
+          <text x="440" y="80" font-size="17" font-weight="800" fill="#e4572e">② 방향</text>
+          <path d="M262 135v14M503 135v14M262 142h241" stroke="#5d667a" stroke-width="2"/>
+          <text x="330" y="172" font-size="17" font-weight="800" fill="#5d667a">③ 크기 (길이)</text>
+        </svg>
+      </div>
+      <p class="muted" style="font-size:14px">문을 열 때 손잡이 쪽을 밀면 쉽게 열리지만 경첩 가까이를 밀면 잘 열리지 않지요? 작용점이 달라졌기 때문이에요.</p>
+    </div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-h" onclick="toggleAcc(this)"><span class="num">3</span>힘을 화살표로 나타내기<span class="arr">▼</span></button>
+    <div class="acc-b">
+      <ul style="line-height:1.9;padding-left:20px;margin:4px 0">
+        <li>화살표는 <b>힘이 작용한 곳(작용점)에서 시작</b>해요.</li>
+        <li>화살표는 <b>힘이 작용한 방향으로</b> 그려요.</li>
+        <li>화살표의 <b>길이는 힘의 크기에 비례</b>하게 그려요. 힘이 2배면 화살표도 2배!</li>
+        <li>힘의 크기 단위는 <b>N(뉴턴)</b>이에요.</li>
+      </ul>
+      <div class="fig">
+        <svg viewBox="0 0 600 170" id="scaleFig"></svg>
+      </div>
+      <p class="muted" style="font-size:14px">모눈 1칸 = 1 N으로 정하면 2 N은 2칸, 4 N은 4칸이에요. 이렇게 정한 약속을 <b>축척</b>이라고 해요.</p>
+    </div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-h" onclick="toggleAcc(this)"><span class="num">4</span>합력과 알짜힘<span class="arr">▼</span></button>
+    <div class="acc-b">
+      <p>한 물체에 작용하는 두 힘을 더한 힘을 <b>합력</b>이라고 해요. 물체에 작용하는 모든 힘의 합력을 <b>알짜힘</b>이라고 해요.</p>
+      <div class="fig"><svg viewBox="0 0 600 250" id="sumFig"></svg></div>
+      <p>• <b>같은 방향</b>: 합력의 크기 = 두 힘의 합, 방향은 두 힘의 방향<br>• <b>반대 방향</b>: 합력의 크기 = 큰 힘 − 작은 힘, 방향은 큰 힘의 방향</p>
+    </div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-h" onclick="toggleAcc(this)"><span class="num">5</span>힘의 평형 조건<span class="arr">▼</span></button>
+    <div class="acc-b">
+      <p>알짜힘이 0이 되면 물체는 힘이 작용하지 않은 것과 같은 상태가 돼요. 이때 물체에 작용하는 힘은 <b>힘의 평형</b>을 이룬다고 해요. 두 힘이 평형을 이루려면 세 가지 조건이 모두 필요해요.</p>
+      <div class="cond">
+        <div>① 크기가 같다<small>5 N과 5 N</small></div>
+        <div>② 방향이 반대다<small>← 와 →</small></div>
+        <div>③ 일직선상에 있다<small>같은 작용선 위</small></div>
+      </div>
+      <div class="fig"><svg viewBox="0 0 600 300" id="eqFig"></svg></div>
+    </div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-h" onclick="toggleAcc(this)"><span class="num">6</span>오개념 바로잡기<span class="arr">▼</span></button>
+    <div class="acc-b mis">
+      <div class="row"><div class="x"><span class="hd">❌ 흔한 생각</span>물체가 멈춰 있으면 힘이 작용하지 않는다.</div><div class="o"><span class="hd">✅ 실제로는</span>힘이 작용해도 <b>알짜힘이 0(힘의 평형)</b>이면 물체는 멈춰 있을 수 있어요. 줄다리기 줄에는 큰 힘이 작용하고 있어요!</div></div>
+      <div class="row"><div class="x"><span class="hd">❌ 흔한 생각</span>화살표는 아무 데서나 그려도 된다.</div><div class="o"><span class="hd">✅ 실제로는</span>화살표의 <b>시작점이 작용점</b>이에요. 어디서 시작하느냐가 곧 힘이 작용한 곳을 뜻해요.</div></div>
+      <div class="row"><div class="x"><span class="hd">❌ 흔한 생각</span>평형을 이루는 두 힘 = 작용·반작용이다.</div><div class="o"><span class="hd">✅ 실제로는</span>힘의 평형은 <b>한 물체</b>에 작용하는 두 힘의 관계예요. 작용·반작용은 <b>서로 다른 두 물체</b>에 작용하므로 평형과 달라요.</div></div>
+    </div>
+  </div>
+
+  <div class="btn-row"><button class="btn ghost" onclick="go(0)">← 이전</button><button class="btn" onclick="go(2)">탐구하러 가기 →</button></div>
+</section>
+
+<!-- ================= 3. 탐구 ================= -->
+<section class="screen" id="screen-explore">
+  <h2>탐구하기</h2>
+  <div class="tabs" id="expTabs">
+    <button class="on" data-t="plan">📋 탐구 계획서</button>
+    <button data-t="e1">① 힘의 표현</button>
+    <button data-t="e2">② 합력과 힘의 평형</button>
+  </div>
+
+  <!-- 계획서 -->
+  <div class="tabp on" id="tab-plan">
+    <div class="card">
+      <h3>🔎 문제 인식</h3>
+      <p>① 물체에 작용하는 힘을 화살표로 어떻게 나타낼 수 있을까?<br>② 한 물체에 두 힘이 작용하는데도 물체가 움직이지 않으려면 두 힘은 어떤 조건을 만족해야 할까?</p>
+      <h3 style="margin-top:14px">💭 나의 가설 <span class="saved" data-for="hyp">저장됨</span></h3>
+      <textarea class="note" data-key="hyp" placeholder="예) 두 힘의 크기가 같고 방향이 반대이면 물체는 움직이지 않을 것이다."></textarea>
+    </div>
+    <div class="plan-grid">
+      <div class="plan-item">
+        <h4>변인</h4>
+        <table class="var-t">
+          <tr><td>조작 변인</td><td>두 힘의 크기, 방향, 작용선의 위치</td></tr>
+          <tr><td>통제 변인</td><td>같은 물체(나무 도막), 같은 축척, 같은 수평면</td></tr>
+          <tr><td>종속 변인</td><td>합력(알짜힘)의 크기와 방향, 물체의 움직임</td></tr>
+        </table>
+      </div>
+      <div class="plan-item">
+        <h4>준비물</h4>
+        <ul><li>용수철저울 2개</li><li>고리가 달린 나무 도막, 수레</li><li>실, 모눈종이, 자, 색연필</li><li>(가상) 태블릿 — 이 실험실</li></ul>
+      </div>
+      <div class="plan-item">
+        <h4>실험 ① 과정 — 힘의 표현</h4>
+        <ol><li>물체와 작용점(고리)을 고른다.</li><li>용수철저울로 당기는 힘의 크기와 방향을 정한다.</li><li>축척을 정하고 모눈 위의 화살표를 관찰한다.</li><li>'내가 그리기'로 직접 화살표를 그려 채점받는다.</li></ol>
+      </div>
+      <div class="plan-item">
+        <h4>실험 ② 과정 — 합력과 평형</h4>
+        <ol><li>나무 도막 양쪽에 용수철저울 A, B를 건다.</li><li>두 힘의 크기와 방향을 바꾸며 합력을 구한다.</li><li>물체가 움직이지 않는 조건을 찾는다.</li><li>작용선을 어긋나게 하여 결과를 비교한다.</li></ol>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>📝 예상 결과 <span class="saved" data-for="predict">저장됨</span></h3>
+      <textarea class="note" data-key="predict" placeholder="두 힘의 크기가 다르면 물체는 어느 쪽으로 움직일지 예상해 보세요."></textarea>
+    </div>
+    <div class="btn-row"><span></span><button class="btn" onclick="openTab('e1')">실험 ① 시작 →</button></div>
+  </div>
+
+  <!-- 실험1 -->
+  <div class="tabp" id="tab-e1">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div class="seg" id="e1Mode"><button class="on" data-m="obs">🔍 관찰 모드</button><button data-m="draw">✏️ 내가 그리기</button></div>
+        <div class="seg" id="e1Obj"><button class="on" data-o="box">📦 상자</button><button data-o="cart">🛒 수레</button></div>
+      </div>
+      <div class="lab">
+        <div>
+          <div class="canvas-wrap"><canvas id="c1"></canvas></div>
+          <div class="warnline" id="e1Warn"></div>
+        </div>
+        <div class="ctrl" id="e1Ctrl">
+          <div>
+            <label>작용점(고리)</label>
+            <div class="seg" id="e1Hook" style="width:100%"><button data-h="left">왼쪽</button><button data-h="top">위</button><button class="on" data-h="right">오른쪽</button></div>
+          </div>
+          <div id="e1ObsCtrl" class="ctrl">
+            <div><label>힘의 크기 <output id="e1Fv">4 N</output></label><input type="range" id="e1F" min="0" max="10" step="1" value="4"></div>
+            <div><label>힘의 방향 <output id="e1Av">0°</output></label><input type="range" id="e1A" min="0" max="355" step="5" value="0">
+              <div class="dir-grid" id="e1Dirs" style="margin-top:6px"></div></div>
+          </div>
+          <div>
+            <label>축척 (모눈 1칸)</label>
+            <div class="seg" id="e1Scale" style="width:100%"><button data-s="0.5">0.5 N</button><button class="on" data-s="1">1 N</button><button data-s="2">2 N</button></div>
+          </div>
+          <div id="e1Draw" style="display:none">
+            <div class="task" id="e1Task"></div>
+            <p class="muted" style="font-size:14px;margin:8px 0">모눈 위에서 <b>작용점을 누른 채 끌어서</b> 화살표를 그리세요. 손을 떼면 채점돼요.</p>
+            <div class="grade" id="e1Grade"><div data-g="pt">작용점</div><div data-g="dir">방향</div><div data-g="len">크기</div></div>
+            <div class="fb" id="e1Fb"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn small" onclick="newTask()">새 과제</button><span class="chip" id="e1Score">성공 0 / 시도 0</span></div>
+          </div>
+          <div class="readout" id="e1Read"></div>
+          <button class="btn small ghost" id="e1RecBtn" onclick="recordE1()">＋ 기록표에 추가</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 실험 ① 기록표</h3>
+      <div class="rec-wrap"><table class="rec"><thead><tr><th>#</th><th>물체</th><th>작용점</th><th>크기</th><th>방향</th><th>축척</th><th>화살표 길이</th></tr></thead><tbody id="e1Rec"><tr><td colspan="7" class="muted">아직 기록이 없어요.</td></tr></tbody></table></div>
+      <h3 style="margin-top:16px">👀 관찰 기록 <span class="saved" data-for="obs1">저장됨</span></h3>
+      <textarea class="note" data-key="obs1" placeholder="힘의 크기를 2배로 하면 화살표는 어떻게 되었나요? 축척을 바꾸면요?"></textarea>
+    </div>
+    <div class="btn-row"><button class="btn ghost" onclick="openTab('plan')">← 계획서</button><button class="btn" onclick="openTab('e2')">실험 ② →</button></div>
+  </div>
+
+  <!-- 실험2 -->
+  <div class="tabp" id="tab-e2">
+    <div class="card">
+      <div class="lab">
+        <div>
+          <div class="canvas-wrap"><canvas id="c2"></canvas></div>
+          <div class="status eq" id="e2Status"><span class="ic">⚖️</span><span>평형!</span></div>
+          <div class="presets">
+            <button onclick="preset(5,-1,5,1,0)">🪢 줄다리기 동점</button>
+            <button onclick="preset(5,-1,7,1,0)">🪢 줄다리기 승부</button>
+            <button onclick="preset(3,1,4,1,0)">📦 둘이 같이 당기기</button>
+            <button onclick="preset(5,-1,5,1,1)">↪️ 작용선 어긋남</button>
+            <button onclick="resetBlock()">🔄 물체 제자리</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <div class="forcebox a">
+            <div class="h"><span>힘 A</span><span id="faV">4 N</span></div>
+            <input type="range" id="faF" min="0" max="10" step="1" value="4">
+            <div class="lr" id="faD"><button data-d="-1" class="on">← 왼쪽</button><button data-d="1">오른쪽 →</button></div>
+          </div>
+          <div class="forcebox b">
+            <div class="h"><span>힘 B</span><span id="fbV">4 N</span></div>
+            <input type="range" id="fbF" min="0" max="10" step="1" value="4">
+            <div class="lr" id="fbD"><button data-d="-1">← 왼쪽</button><button data-d="1" class="on">오른쪽 →</button></div>
+          </div>
+          <div>
+            <label>힘 B의 작용선</label>
+            <div class="seg" id="e2Line" style="width:100%"><button class="on" data-l="0">일직선</button><button data-l="1">어긋나게</button></div>
+          </div>
+          <div class="readout" id="e2Read"></div>
+          <button class="btn small ghost" onclick="recordE2()">＋ 기록표에 추가</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 실험 ② 기록표</h3>
+      <div class="rec-wrap"><table class="rec"><thead><tr><th>#</th><th>힘 A</th><th>힘 B</th><th>작용선</th><th>합력(알짜힘)</th><th>결과</th></tr></thead><tbody id="e2Rec"><tr><td colspan="6" class="muted">아직 기록이 없어요.</td></tr></tbody></table></div>
+      <h3 style="margin-top:16px">👀 관찰 기록 · 결론 <span class="saved" data-for="obs2">저장됨</span></h3>
+      <textarea class="note" data-key="obs2" placeholder="물체가 움직이지 않았던 경우의 공통점은? 작용선이 어긋나면 어떻게 되었나요?"></textarea>
+    </div>
+    <div class="btn-row"><button class="btn ghost" onclick="openTab('e1')">← 실험 ①</button><button class="btn" onclick="go(3)">스티커로 정리하기 →</button></div>
+  </div>
+</section>
+
+<!-- ================= 4. 스티커 ================= -->
+<section class="screen" id="screen-sticker">
+  <h2>🏷️ 스티커 붙이기로 정리하기</h2>
+  <p class="muted">스티커를 <b>눌러서 고른 뒤</b>, 알맞은 빈칸을 눌러 붙이세요. 붙인 스티커를 다시 누르면 떼어져요. 다 붙였으면 <b>확인하기</b>!</p>
+
+  <div class="card">
+    <h3>판 1 · 힘의 화살표에 이름표 붙이기</h3>
+    <div class="stk-status"><span id="b1Count">0 / 4</span><span id="b1Try">시도 0회</span></div>
+    <div class="board board1" id="board-b1">
+      <svg viewBox="0 0 700 330">
+        <defs><pattern id="g1" width="35" height="35" patternUnits="userSpaceOnUse"><path d="M35 0H0V35" fill="none" stroke="#d7dfee" stroke-width="1"/></pattern></defs>
+        <rect width="700" height="330" fill="url(#g1)"/>
+        <line x1="0" y1="245" x2="700" y2="245" stroke="#9aa7bf" stroke-width="3"/>
+        <rect x="105" y="140" width="140" height="105" rx="8" fill="#d9a15f" stroke="#a8702f" stroke-width="3"/>
+        <line x1="245" y1="192" x2="490" y2="192" stroke="#e4572e" stroke-width="10"/>
+        <path d="M525 192l-38-20v40z" fill="#e4572e"/>
+        <circle cx="245" cy="192" r="10" fill="#1d2433"/>
+        <path d="M247 222v14M523 222v14M247 229h276" stroke="#5d667a" stroke-width="2.5"/>
+        <text x="470" y="292" font-size="20" font-weight="900" fill="#1d2433">크기 = 4</text>
+        <g font-size="15" font-weight="900" fill="#fff"><circle cx="210" cy="280" r="13" fill="#2f4bd8"/><text x="210" y="285" text-anchor="middle">1</text><circle cx="525" cy="95" r="13" fill="#2f4bd8"/><text x="525" y="100" text-anchor="middle">2</text><circle cx="385" cy="280" r="13" fill="#2f4bd8"/><text x="385" y="285" text-anchor="middle">3</text><circle cx="630" cy="285" r="13" fill="#2f4bd8"/><text x="630" y="290" text-anchor="middle">4</text></g>
+      </svg>
+      <div class="slot-layer">
+      <div class="slot" data-slot="pt" data-n="1" style="left:30%;top:85%"></div>
+      <div class="slot" data-slot="dir" data-n="2" style="left:75%;top:29%"></div>
+      <div class="slot" data-slot="len" data-n="3" style="left:55%;top:85%"></div>
+      <div class="slot" data-slot="unit" data-n="4" style="left:90%;top:86%;min-width:100px"></div>
+      </div>
+    </div>
+    <div class="tray" id="tray-b1"><div class="tray-lb">스티커 보관함</div></div>
+    <div class="hints" id="hints-b1"></div>
+    <div class="done-stamp" id="done-b1"><div class="st">완성!</div><div>화살표 = <b>작용점</b>에서 시작 + <b>방향</b>으로 + <b>크기</b>에 비례한 길이, 단위는 <b>N</b>. 'kg'은 질량의 단위라 힘의 단위가 아니에요.</div></div>
+    <div class="btn-row" style="margin-top:12px"><button class="btn small ghost" onclick="resetBoard('b1')">처음부터</button><button class="btn small" onclick="checkBoard('b1')">확인하기</button></div>
+  </div>
+
+  <div class="card">
+    <h3>판 2 · 힘의 평형일까, 아닐까?</h3>
+    <div class="stk-status"><span id="b2Count">0 / 8</span><span id="b2Try">시도 0회</span></div>
+    <div class="board bins" id="board-b2">
+      <div class="bin eq"><h4>⚖️ 힘의 평형 <span class="tag">알짜힘 = 0</span></h4><div class="slot" data-slot="eq">여기에 붙이세요</div></div>
+      <div class="bin neq"><h4>➜ 평형 아님 <span class="tag">알짜힘 ≠ 0 또는 돌아감</span></h4><div class="slot" data-slot="neq">여기에 붙이세요</div></div>
+    </div>
+    <div class="tray" id="tray-b2"><div class="tray-lb">상황 카드 보관함</div></div>
+    <div class="hints" id="hints-b2"></div>
+    <div class="done-stamp" id="done-b2"><div class="st">완성!</div><div>평형이면 물체는 멈춰 있어요. 단, <b>'작용·반작용'</b> 스티커는 붙이지 않는 게 정답! 작용·반작용은 서로 다른 두 물체에 작용하므로 한 물체의 힘의 평형과 달라요.</div></div>
+    <div class="btn-row" style="margin-top:12px"><button class="btn small ghost" onclick="resetBoard('b2')">처음부터</button><button class="btn small" onclick="checkBoard('b2')">확인하기</button></div>
+  </div>
+
+  <div class="btn-row"><button class="btn ghost" onclick="go(2)">← 탐구</button><button class="btn" onclick="go(4)">실생활 연결 →</button></div>
+</section>
+
+<!-- ================= 5. 실생활 ================= -->
+<section class="screen" id="screen-life">
+  <h2>🌏 우리 생활 속 힘의 표현과 평형</h2>
+  <p class="muted">주변에서 멈춰 있는 물체를 보면, "힘이 없구나"가 아니라 "힘이 평형을 이루고 있구나!" 하고 떠올려 보세요.</p>
+  <div class="life" id="lifeGrid"></div>
+  <div class="btn-row"><button class="btn ghost" onclick="go(3)">← 스티커</button><button class="btn" onclick="startQuiz()">개념 확인 문제 풀기 →</button></div>
+</section>
+
+<!-- ================= 6. 문제 ================= -->
+<section class="screen" id="screen-quiz">
+  <div class="card">
+    <div class="qbar"><i id="qBar"></i></div>
+    <div class="qhead"><span id="qNum">문제 1 / 10</span><span id="qType"></span></div>
+    <div class="qtext" id="qText"></div>
+    <div id="qFig"></div>
+    <div id="qChoices"></div>
+    <div class="expl" id="qExpl"></div>
+    <div class="btn-row"><span></span><button class="btn" id="qNext" style="display:none" onclick="nextQ()">다음 문제 →</button></div>
+  </div>
+</section>
+
+<section class="screen" id="screen-result">
+  <div class="card" style="text-align:center">
+    <h2>수고했어요! 🎉</h2>
+    <div class="score"><span id="rScore">0</span><span style="font-size:28px;color:var(--muted)"> / 10</span></div>
+    <p id="rMsg" style="font-weight:700;font-size:17px"></p>
+    <p class="muted" id="rTime"></p>
+  </div>
+  <div class="card" id="rWrongCard">
+    <h3>다시 볼 문제</h3>
+    <div class="wronglist" id="rWrong"></div>
+  </div>
+  <div class="card checklist">
+    <h3>✅ 학습목표 자가 점검</h3>
+    <label><input type="checkbox" data-ck="1"> 이제 나는 과학에서 말하는 힘의 정의를 설명할 수 있다.</label>
+    <label><input type="checkbox" data-ck="2"> 이제 나는 힘을 작용점·방향·크기를 담은 화살표로 나타낼 수 있다.</label>
+    <label><input type="checkbox" data-ck="3"> 이제 나는 나란하게 작용하는 두 힘의 합력을 구할 수 있다.</label>
+    <label><input type="checkbox" data-ck="4"> 이제 나는 힘의 평형 조건 세 가지를 설명할 수 있다.</label>
+    <p class="muted" style="font-size:14px">📸 이 화면을 캡처해서 선생님께 제출하세요.</p>
+  </div>
+  <div class="btn-row"><button class="btn ghost" id="rRetry" onclick="retryWrong()">틀린 문제 다시 풀기</button><button class="btn" onclick="go(0)">처음으로</button></div>
+</section>
+
+</div>
+<footer>Made by Lee Jae Kwang</footer>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const LS='vlab-force-';
+function lsGet(k,d){try{const v=localStorage.getItem(LS+k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(LS+k,JSON.stringify(v));}catch(e){}}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* ================= 화면 전환 ================= */
+const SCREENS=['intro','concept','explore','sticker','life','quiz','result'];
+const STEP_NAMES=['도입','개념','탐구','스티커','실생활','문제'];
+let cur=0;
+function renderSteps(){
+  const w=$('#steps'); w.innerHTML='';
+  const act=Math.min(cur,5);
+  STEP_NAMES.forEach((n,i)=>{
+    const b=document.createElement('button');
+    b.className='step'+(i<act?' done':'')+(i===act?' active':'');
+    b.innerHTML='<span class="bar"></span><span class="lb">'+n+'</span>';
+    b.setAttribute('aria-label',n+' 단계로 이동');
+    b.onclick=()=>{ if(i===5) startQuiz(); else go(i); };
+    w.appendChild(b);
+  });
+  $('#stepName').textContent=cur===6?'결과':STEP_NAMES[act];
+}
+function go(i){
+  SCREENS.forEach((s,k)=>$('#screen-'+s).classList.toggle('active',k===i));
+  cur=i; renderSteps(); window.scrollTo(0,0);
+  if(i===2){ sizeCanvases(); drawE1(); }
+  if(i===3){ renderBoard('b1'); renderBoard('b2'); }
+}
+
+/* ================= 개념 ================= */
+function toggleAcc(h){ h.parentElement.classList.toggle('open'); }
+const EFF={clay:'찰흙을 누르면 <b>모양</b>이 변해요.',sled:'썰매를 밀면 <b>빠르기</b>가 변해요 (운동 상태 변화).',ball:'날아오는 공을 치면 공의 <b>운동 방향과 빠르기</b>가 변해요.'};
+function playEffect(k,btn){
+  $$('#effSeg button').forEach(b=>b.classList.toggle('on',b===btn));
+  ['Clay','Sled','Ball'].forEach(n=>$('#eff'+n).style.display=(n.toLowerCase()===k?'':'none'));
+  const svg=$('#effSvg'); svg.classList.remove('play-clay','play-sled','play-ball'); void svg.getBoundingClientRect();
+  svg.classList.add('play-'+k); $('#effCap').innerHTML=EFF[k];
+}
+function svgArrow(x1,y1,x2,y2,color,w,label,ly){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,hl=Math.min(22,L*.6),hw=hl*.55;
+  const bx=x2-ux*hl,by=y2-uy*hl;
+  let s='<line x1="'+x1+'" y1="'+y1+'" x2="'+bx+'" y2="'+by+'" stroke="'+color+'" stroke-width="'+w+'" stroke-linecap="round"/>';
+  s+='<path d="M'+x2+' '+y2+'L'+(bx-uy*hw)+' '+(by+ux*hw)+'L'+(bx+uy*hw)+' '+(by-ux*hw)+'z" fill="'+color+'"/>';
+  if(label) s+='<text x="'+((x1+x2)/2)+'" y="'+(ly!=null?ly:((y1+y2)/2-12))+'" text-anchor="middle" font-size="16" font-weight="800" fill="'+color+'">'+label+'</text>';
+  return s;
+}
+function gridSvg(w,h,c){let s='';for(let x=0;x<=w;x+=c)s+='<line x1="'+x+'" y1="0" x2="'+x+'" y2="'+h+'" stroke="#d7dfee"/>';for(let y=0;y<=h;y+=c)s+='<line x1="0" y1="'+y+'" x2="'+w+'" y2="'+y+'" stroke="#d7dfee"/>';return s;}
+function buildConceptFigs(){
+  let s=gridSvg(600,170,30);
+  s+='<rect x="60" y="30" width="60" height="45" rx="5" fill="#d9a15f"/>'+svgArrow(120,52,180,52,'#e4572e',6,'2 N');
+  s+='<rect x="60" y="100" width="60" height="45" rx="5" fill="#d9a15f"/>'+svgArrow(120,122,240,122,'#e4572e',6,'4 N');
+  s+='<text x="300" y="58" font-size="15" fill="#5d667a">2칸 = 2 N</text><text x="300" y="128" font-size="15" fill="#5d667a">4칸 = 4 N (2배 길이)</text>';
+  $('#scaleFig').innerHTML=s;
+  let t='<text x="10" y="24" font-size="16" font-weight="800" fill="#1d2433">같은 방향</text>';
+  t+='<rect x="250" y="40" width="70" height="46" rx="6" fill="#d9a15f"/>'+svgArrow(320,55,370,55,'#e4572e',6,'50 N',48)+svgArrow(320,74,420,74,'#0f9d8a',6,'100 N',100);
+  t+=svgArrow(320,108,470,108,'#8a3ffc',7,'')+'<text x="480" y="113" font-size="15" font-weight="800" fill="#8a3ffc">합력 150 N →</text>';
+  t+='<text x="10" y="150" font-size="16" font-weight="800" fill="#1d2433">반대 방향</text>';
+  t+='<rect x="250" y="165" width="70" height="46" rx="6" fill="#d9a15f"/>'+svgArrow(250,188,200,188,'#e4572e',6,'50 N',180)+svgArrow(320,188,420,188,'#0f9d8a',6,'100 N',180);
+  t+=svgArrow(320,232,370,232,'#8a3ffc',7,'')+'<text x="380" y="237" font-size="15" font-weight="800" fill="#8a3ffc">합력 100 − 50 = 50 N →</text>';
+  $('#sumFig').innerHTML=t;
+  const blk=(x,y)=>'<rect x="'+x+'" y="'+y+'" width="60" height="40" rx="5" fill="#d9a15f"/>';
+  let e='';
+  e+=blk(120,20)+svgArrow(120,40,50,40,'#e4572e',6,'5 N')+svgArrow(180,40,250,40,'#0f9d8a',6,'5 N')+'<text x="290" y="46" font-size="17" font-weight="900" fill="#1e9e6b">✔ 평형</text>';
+  e+=blk(120,95)+svgArrow(120,115,50,115,'#e4572e',6,'5 N')+svgArrow(180,115,280,115,'#0f9d8a',6,'8 N')+'<text x="300" y="121" font-size="16" font-weight="800" fill="#d64545">✖ 크기가 다름 → 오른쪽으로 움직임</text>';
+  e+=blk(120,170)+svgArrow(180,182,250,182,'#e4572e',6,'')+svgArrow(180,198,250,198,'#0f9d8a',6,'')+'<text x="300" y="196" font-size="16" font-weight="800" fill="#d64545">✖ 같은 방향 → 합력 10 N</text>';
+  e+=blk(120,240)+svgArrow(120,248,50,248,'#e4572e',6,'')+svgArrow(180,272,250,272,'#0f9d8a',6,'')+'<text x="300" y="266" font-size="16" font-weight="800" fill="#d64545">✖ 작용선이 어긋남 → 물체가 돎</text>';
+  $('#eqFig').innerHTML=e;
+}
+
+/* ================= 탭 ================= */
+let curTab='plan';
+function openTab(t){
+  curTab=t;
+  $$('#expTabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  $$('.tabp').forEach(p=>p.classList.toggle('on',p.id==='tab-'+t));
+  sizeCanvases(); if(t==='e1') drawE1(); if(t==='e2'){ drawE2(); if(!E2.raf){E2.last=0;loopE2();} }
+  const tb=$('#expTabs'); if(tb.getBoundingClientRect().top<0) tb.scrollIntoView({behavior:'smooth'});
+}
+$$('#expTabs button').forEach(b=>b.onclick=()=>openTab(b.dataset.t));
+
+/* ================= 캔버스 공통 ================= */
+const C1={W:780,H:450,cell:30}, C2={W:780,H:345};
+function setupCanvas(cv,W,H){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  if(cv.width!==W*dpr){cv.width=W*dpr;cv.height=H*dpr;}
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return ctx;
+}
+function sizeCanvases(){ /* 논리 좌표 고정, CSS가 폭을 맞춘다 */ }
+function canvasPoint(cv,W,H,e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H};}
+function drawArrow(ctx,x1,y1,x2,y2,color,w){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy); if(L<1)return;
+  const ux=dx/L,uy=dy/L,hl=Math.min(24,L*.55),hw=hl*.55,bx=x2-ux*hl,by=y2-uy*hl;
+  ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=w;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(bx,by);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(bx-uy*hw,by+ux*hw);ctx.lineTo(bx+uy*hw,by-ux*hw);ctx.closePath();ctx.fill();
+}
+function rrect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const CSSV=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ================= 실험 1: 힘의 표현 ================= */
+const HOOKS={left:{x:330,y:240,name:'왼쪽 고리'},top:{x:390,y:210,name:'위 고리'},right:{x:450,y:240,name:'오른쪽 고리'}};
+const E1={mode:'obs',obj:'box',hook:'right',F:4,A:0,scale:1,drawing:null,drawn:null,task:null,graded:null,ok:0,tries:0};
+const DIRS=[[0,'→'],[45,'↗'],[90,'↑'],[135,'↖'],[180,'←'],[225,'↙'],[270,'↓'],[315,'↘']];
+function dirName(a){a=((a%360)+360)%360;const n=['오른쪽','오른쪽 위','위','왼쪽 위','왼쪽','왼쪽 아래','아래','오른쪽 아래'];const i=Math.round(a/45)%8;return (a%45===0?'':'약 ')+n[i];}
+function segSetup(id,key,cb){$$(id+' button').forEach(b=>b.onclick=()=>{$$(id+' button').forEach(x=>x.classList.toggle('on',x===b));cb(b.dataset[key]);});}
+function initE1(){
+  const dg=$('#e1Dirs');
+  DIRS.forEach(([a,s])=>{const b=document.createElement('button');b.textContent=s;b.dataset.a=a;b.setAttribute('aria-label',dirName(a));b.onclick=()=>{E1.A=a;$('#e1A').value=a;updE1();};dg.appendChild(b);});
+  $('#e1F').oninput=e=>{E1.F=+e.target.value;updE1();};
+  $('#e1A').oninput=e=>{E1.A=+e.target.value;updE1();};
+  segSetup('#e1Mode','m',m=>{E1.mode=m;$('#e1ObsCtrl').style.display=m==='obs'?'':'none';$('#e1Draw').style.display=m==='draw'?'':'none';$('#e1RecBtn').style.display=m==='obs'?'':'none';$('#e1Hook').parentElement.style.display=m==='obs'?'':'none';$('#e1Scale').parentElement.style.display=m==='obs'?'':'none';if(m==='draw'&&!E1.task)newTask();updE1();});
+  segSetup('#e1Obj','o',o=>{E1.obj=o;updE1();});
+  segSetup('#e1Hook','h',h=>{E1.hook=h;updE1();});
+  segSetup('#e1Scale','s',s=>{E1.scale=+s;updE1();});
+  const cv=$('#c1');
+  cv.addEventListener('pointerdown',e=>{if(E1.mode!=='draw')return;const p=snap(canvasPoint(cv,C1.W,C1.H,e));E1.drawing={x1:p.x,y1:p.y,x2:p.x,y2:p.y};E1.graded=null;cv.setPointerCapture(e.pointerId);drawE1();});
+  cv.addEventListener('pointermove',e=>{if(!E1.drawing)return;const p=snap(canvasPoint(cv,C1.W,C1.H,e));E1.drawing.x2=p.x;E1.drawing.y2=p.y;drawE1();});
+  const end=()=>{if(!E1.drawing)return;const d=E1.drawing;E1.drawing=null;if(Math.hypot(d.x2-d.x1,d.y2-d.y1)<5){drawE1();return;}E1.drawn=d;gradeDraw();drawE1();};
+  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+  E1.rec=lsGet('rec1',[]); renderRec1(); updE1();
+}
+function ro(w){const c=w.charCodeAt(w.length-1)-0xAC00;const b=c>=0&&c<11172?c%28:0;return (b===0||b===8)?'로':'으로';}
+function snap(p){const c=C1.cell;return{x:Math.round(p.x/c)*c,y:Math.round(p.y/c)*c};}
+function updE1(){
+  $('#e1Fv').textContent=E1.F+' N'; $('#e1Av').textContent=E1.A+'°';
+  $$('#e1Dirs button').forEach(b=>b.classList.toggle('on',+b.dataset.a===E1.A));
+  const cells=E1.F/E1.scale;
+  if(E1.mode==='obs'){
+    $('#e1Read').innerHTML='📍 작용점: <b>'+HOOKS[E1.hook].name+'</b><br>➡️ 방향: <b>'+dirName(E1.A)+'</b> ('+E1.A+'°)<br>💪 크기: <b>'+E1.F+' N</b><br>📏 화살표 길이: <b>'+(+cells.toFixed(1))+'칸</b> <span class="muted">(1칸='+E1.scale+' N)</span>';
+  } else {
+    $('#e1Read').innerHTML='💡 힌트: 먼저 <b>어디에서</b> 시작할지(작용점), <b>어느 쪽</b>인지(방향), <b>몇 칸</b>인지(크기 ÷ 축척) 차례로 생각해 보세요.';
+  }
+  drawE1();
+}
+function drawObject(ctx,obj){
+  ctx.fillStyle='#9aa7bf';ctx.fillRect(0,270,C1.W,3);
+  if(obj==='box'){
+    ctx.fillStyle=CSSV('--wood');ctx.strokeStyle=CSSV('--wood-d');ctx.lineWidth=3;rrect(ctx,330,210,120,60,7);ctx.fill();ctx.stroke();
+    ctx.strokeStyle='rgba(120,70,20,.25)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(338,230);ctx.lineTo(442,230);ctx.moveTo(338,250);ctx.lineTo(442,250);ctx.stroke();
+    ctx.fillStyle='#5b3a17';ctx.font='800 16px '+CSSV('--font');ctx.textAlign='center';ctx.fillText('상자',390,262);
+  } else {
+    ctx.fillStyle='#4e7ad6';ctx.strokeStyle='#27407a';ctx.lineWidth=3;rrect(ctx,330,210,120,42,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#27407a';[355,425].forEach(x=>{ctx.beginPath();ctx.arc(x,261,9,0,Math.PI*2);ctx.fill();});
+    ctx.fillStyle='#fff';ctx.font='700 15px '+CSSV('--font');ctx.textAlign='center';ctx.fillText('수레',390,237);
+  }
+  Object.values(HOOKS).forEach(h=>{ctx.strokeStyle='#39414f';ctx.lineWidth=3;ctx.beginPath();ctx.arc(h.x,h.y,5,0,Math.PI*2);ctx.stroke();});
+}
+function drawE1(){
+  const cv=$('#c1'); if(!cv.offsetParent) return;
+  const ctx=setupCanvas(cv,C1.W,C1.H), c=C1.cell;
+  ctx.clearRect(0,0,C1.W,C1.H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,C1.W,C1.H);
+  ctx.strokeStyle='#e1e7f2';ctx.lineWidth=1;
+  for(let x=0;x<=C1.W;x+=c){ctx.beginPath();ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,C1.H);ctx.stroke();}
+  for(let y=0;y<=C1.H;y+=c){ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(C1.W,y+.5);ctx.stroke();}
+  const sc=E1.mode==='draw'&&E1.task?E1.task.scale:E1.scale;
+  ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(6,6,232,50);ctx.fillStyle='#2f4bd8';ctx.font='800 18px '+CSSV('--font');ctx.textAlign='left';
+  ctx.fillText('축척: 모눈 1칸 = '+sc+' N',14,28);
+  ctx.strokeStyle='#2f4bd8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(14,44);ctx.lineTo(14+c,44);ctx.moveTo(14,38);ctx.lineTo(14,50);ctx.moveTo(14+c,38);ctx.lineTo(14+c,50);ctx.stroke();
+  drawObject(ctx,E1.obj);
+  let warn='';
+  if(E1.mode==='obs'){
+    const h=HOOKS[E1.hook],L=E1.F/E1.scale*c,rad=E1.A*Math.PI/180,ux=Math.cos(rad),uy=-Math.sin(rad);
+    if(E1.F>0){
+      /* 끈과 용수철저울 */
+      const far=900, sx=h.x+ux*far, sy=h.y+uy*far;
+      ctx.strokeStyle='rgba(60,60,60,.35)';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(h.x,h.y);ctx.lineTo(sx,sy);ctx.stroke();ctx.setLineDash([]);
+      const d=Math.max(L+40,120), px=h.x+ux*d, py=h.y+uy*d;
+      ctx.save();ctx.translate(px,py);ctx.rotate(Math.atan2(uy,ux));
+      ctx.fillStyle='#fff';ctx.strokeStyle='#6b7486';ctx.lineWidth=2;rrect(ctx,0,-13,78,26,6);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#e7ecf5';ctx.fillRect(6,-6,66,12);ctx.fillStyle=CSSV('--fa');ctx.fillRect(6,-6,66*E1.F/10,12);
+      ctx.restore();
+      const tx=h.x+ux*L, ty=h.y+uy*L;
+      drawArrow(ctx,h.x,h.y,tx,ty,CSSV('--fa'),7);
+      ctx.fillStyle=CSSV('--fa');ctx.font='900 18px '+CSSV('--font');ctx.textAlign='center';
+      ctx.fillText(E1.F+' N',tx+ux*26-uy*16,ty+uy*26+ux*16+6);
+      if(tx<0||tx>C1.W||ty<0||ty>C1.H) warn='⚠️ 화살표가 모눈 밖으로 나갔어요. 축척을 크게(1칸 = 2 N) 바꿔 보세요.';
+    }
+    ctx.fillStyle='#1d2433';ctx.beginPath();ctx.arc(h.x,h.y,7,0,Math.PI*2);ctx.fill();
+  } else {
+    if(E1.graded&&!E1.graded.all){const t=E1.task,h=HOOKS[t.hook],L=t.F/t.scale*c,r=t.A*Math.PI/180;ctx.globalAlpha=.55;ctx.setLineDash([8,6]);drawArrow(ctx,h.x,h.y,h.x+Math.cos(r)*L,h.y-Math.sin(r)*L,CSSV('--ok'),5);ctx.setLineDash([]);ctx.globalAlpha=1;}
+    const d=E1.drawing||E1.drawn;
+    if(d){drawArrow(ctx,d.x1,d.y1,d.x2,d.y2,E1.drawing?'#1d2433':(E1.graded&&E1.graded.all?CSSV('--ok'):CSSV('--fa')),7);ctx.fillStyle='#1d2433';ctx.beginPath();ctx.arc(d.x1,d.y1,6,0,Math.PI*2);ctx.fill();
+      const cells=Math.hypot(d.x2-d.x1,d.y2-d.y1)/c;ctx.fillStyle='#1d2433';ctx.font='800 15px '+CSSV('--font');ctx.textAlign='left';ctx.fillText((+cells.toFixed(1))+'칸',d.x2+10,d.y2-10);}
+  }
+  $('#e1Warn').textContent=warn;
+}
+function newTask(){
+  const hooks={right:[0,90,270],top:[90,0,180],left:[180,90,270]};
+  const hk=shuffle(Object.keys(hooks))[0], A=shuffle(hooks[hk])[0];
+  const scale=shuffle([1,1,2,0.5])[0];
+  let F; if(scale===2)F=2*(1+Math.floor(Math.random()*4)); else if(scale===0.5)F=1+Math.floor(Math.random()*3); else F=2+Math.floor(Math.random()*5);
+  if(hk==='top'&&A===90&&F/scale>6)F=6*scale;
+  E1.task={hook:hk,A,F,scale};E1.drawn=null;E1.graded=null;
+  $('#e1Task').innerHTML='과제: <span class="big">'+HOOKS[hk].name+'</span>에서 <span class="big">'+dirName(A)+'</span>'+ro(dirName(A))+' <span class="big">'+F+' N</span>의 힘<br><span class="muted" style="font-weight:600;font-size:14px">축척: 모눈 1칸 = '+scale+' N</span>';
+  $$('#e1Grade div').forEach(d=>d.className='');$('#e1Fb').textContent='';
+  drawE1();
+}
+function gradeDraw(){
+  const t=E1.task,d=E1.drawn,h=HOOKS[t.hook],c=C1.cell;
+  const pt=Math.hypot(d.x1-h.x,d.y1-h.y)<c*.5;
+  const ang=((Math.atan2(-(d.y2-d.y1),d.x2-d.x1)*180/Math.PI)+360)%360;
+  let da=Math.abs(ang-t.A);da=Math.min(da,360-da);const dir=da<10;
+  const len=Math.abs(Math.hypot(d.x2-d.x1,d.y2-d.y1)/c-t.F/t.scale)<.35;
+  const all=pt&&dir&&len; E1.graded={pt,dir,len,all}; E1.tries++; if(all)E1.ok++;
+  const g={pt,dir,len};$$('#e1Grade div').forEach(x=>x.className=g[x.dataset.g]?'ok':'no');
+  $$('#e1Grade div').forEach(x=>{const nm={pt:'작용점',dir:'방향',len:'크기'}[x.dataset.g];x.textContent=(g[x.dataset.g]?'✔ ':'✖ ')+nm;});
+  let fb=[];
+  if(all) fb.push('🎉 완벽해요! 세 요소를 모두 정확히 나타냈어요.');
+  else{
+    if(!pt) fb.push('작용점: 화살표는 <b>'+h.name+'</b>에서 시작해야 해요.');
+    if(!dir) fb.push('방향: <b>'+dirName(t.A)+'</b> 방향으로 그려야 해요.');
+    if(!len) fb.push('크기: '+t.F+' N ÷ '+t.scale+' N = <b>'+(t.F/t.scale)+'칸</b> 길이여야 해요.');
+    fb.push('<span class="muted">초록 점선이 정답 화살표예요. 다시 그려 보세요!</span>');
+  }
+  $('#e1Fb').innerHTML=fb.join('<br>'); $('#e1Score').textContent='성공 '+E1.ok+' / 시도 '+E1.tries;
+}
+function recordE1(){
+  E1.rec.push({o:E1.obj==='box'?'상자':'수레',h:HOOKS[E1.hook].name,F:E1.F,d:dirName(E1.A)+' ('+E1.A+'°)',s:E1.scale,L:+(E1.F/E1.scale).toFixed(1)});
+  if(E1.rec.length>20)E1.rec.shift(); lsSet('rec1',E1.rec); renderRec1();
+}
+function renderRec1(){
+  const tb=$('#e1Rec'); if(!E1.rec.length){tb.innerHTML='<tr><td colspan="7" class="muted">아직 기록이 없어요. 조건을 바꾼 뒤 “기록표에 추가”를 눌러 보세요.</td></tr>';return;}
+  tb.innerHTML=E1.rec.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+r.o+'</td><td>'+r.h+'</td><td>'+r.F+' N</td><td>'+r.d+'</td><td>1칸='+r.s+' N</td><td><b>'+r.L+'칸</b></td></tr>').join('');
+}
+
+/* ================= 실험 2: 합력과 평형 ================= */
+const E2={FA:4,dA:-1,FB:4,dB:1,off:0,x:390,v:0,th:0,w:0,hitWall:false,raf:null,last:0};
+function initE2(){
+  $('#faF').oninput=e=>{E2.FA=+e.target.value;changed();};
+  $('#fbF').oninput=e=>{E2.FB=+e.target.value;changed();};
+  const lr=(id,k)=>$$(id+' button').forEach(b=>b.onclick=()=>{$$(id+' button').forEach(x=>x.classList.toggle('on',x===b));E2[k]=+b.dataset.d;changed();});
+  lr('#faD','dA');lr('#fbD','dB');
+  segSetup('#e2Line','l',l=>{E2.off=+l;changed();});
+  E2.rec=lsGet('rec2',[]); renderRec2(); changed();
+}
+function netF(){return E2.dA*E2.FA+E2.dB*E2.FB;}
+function syncE2Ui(){
+  $('#faF').value=E2.FA;$('#fbF').value=E2.FB;
+  $$('#faD button').forEach(b=>b.classList.toggle('on',+b.dataset.d===E2.dA));
+  $$('#fbD button').forEach(b=>b.classList.toggle('on',+b.dataset.d===E2.dB));
+  $$('#e2Line button').forEach(b=>b.classList.toggle('on',+b.dataset.l===E2.off));
+}
+function preset(fa,da,fb,db,off){E2.FA=fa;E2.dA=da;E2.FB=fb;E2.dB=db;E2.off=off;syncE2Ui();resetBlock();}
+function resetBlock(){E2.x=390;E2.v=0;E2.th=0;E2.w=0;E2.hitWall=false;changed();}
+function e2State(){
+  const n=netF();
+  const opposite=E2.dA!==E2.dB&&E2.FA>0&&E2.FB>0;
+  const rot=E2.off&&opposite;
+  if(n===0&&rot) return 'rot';
+  if(n===0) return 'eq';
+  return 'mv';
+}
+function arrowWord(n){return n>0?'오른쪽 →':'← 왼쪽';}
+function changed(){
+  E2.v=0; E2.w=0; E2.hitWall=false;
+  $('#faV').textContent=E2.FA+' N '+(E2.dA<0?'←':'→');
+  $('#fbV').textContent=E2.FB+' N '+(E2.dB<0?'←':'→');
+  const n=netF(), st=e2State();
+  let how;
+  if(E2.dA===E2.dB) how='같은 방향 → <b>'+E2.FA+' + '+E2.FB+' = '+(E2.FA+E2.FB)+' N</b>';
+  else how='반대 방향 → <b>'+Math.max(E2.FA,E2.FB)+' − '+Math.min(E2.FA,E2.FB)+' = '+Math.abs(E2.FA-E2.FB)+' N</b>';
+  $('#e2Read').innerHTML='🧮 합력 구하기<br>'+how+'<br>합력(알짜힘): <b style="color:#8a3ffc">'+Math.abs(n)+' N'+(n?' '+arrowWord(n):'')+'</b>';
+  const s=$('#e2Status');
+  if(st==='eq'){s.className='status eq';s.innerHTML='<span class="ic">⚖️</span><span>힘의 평형! 알짜힘이 0 N이라 물체가 움직이지 않아요.'+(E2.FA===0&&E2.FB===0?' (힘이 작용하지 않는 상태)':'')+'</span>';}
+  else if(st==='rot'){s.className='status rot';s.innerHTML='<span class="ic">🔄</span><span>알짜힘은 0 N이지만 두 힘이 일직선상에 있지 않아 물체가 <b>돌아가요</b>. → 평형이 아니에요!</span>';}
+  else{s.className='status mv';s.innerHTML='<span class="ic">➡️</span><span>알짜힘 '+Math.abs(n)+' N이 '+(n>0?'오른쪽':'왼쪽')+'으로 작용해 물체가 <b>'+(n>0?'오른쪽':'왼쪽')+'으로 움직이기 시작</b>해요. → 평형이 아니에요.</span>';}
+  if(!E2.raf) loopE2();
+}
+function loopE2(t){
+  E2.raf=requestAnimationFrame(loopE2);
+  const cv=$('#c2'); if(!cv.offsetParent){cancelAnimationFrame(E2.raf);E2.raf=null;return;}
+  const dt=Math.min(.05,E2.last?(t-E2.last)/1000:.016); E2.last=t;
+  const n=netF(), st=e2State();
+  if(n!==0&&!E2.hitWall){E2.v+=n*14*dt;E2.x+=E2.v*dt;
+    if(E2.x<150||E2.x>630){E2.x=Math.max(150,Math.min(630,E2.x));E2.v=0;E2.hitWall=true;}}
+  if(st==='rot'){const tq=E2.FB*E2.dB*.02; E2.w+=tq*dt*60; E2.th+=E2.w*dt; if(Math.abs(E2.th)>.38){E2.th=Math.sign(E2.th)*.38;E2.w=0;}}
+  else if(Math.abs(E2.th)>.001&&E2.off===0){E2.th*=.9;}
+  drawE2();
+}
+function drawE2(){
+  const cv=$('#c2'); if(!cv.offsetParent) return;
+  const ctx=setupCanvas(cv,C2.W,C2.H), F=CSSV('--font');
+  ctx.clearRect(0,0,C2.W,C2.H);ctx.fillStyle='#fbfcff';ctx.fillRect(0,0,C2.W,C2.H);
+  ctx.fillStyle='#e8edf6';ctx.fillRect(0,218,C2.W,C2.H-218);ctx.fillStyle='#9aa7bf';ctx.fillRect(0,216,C2.W,3);
+  const u=17; /* 1 N = 17 px */
+  const bx=E2.x, by=176, bw=112, bh=80, ph=E2.th, co=Math.cos(ph), si=Math.sin(ph);
+  const toW=(lx,ly)=>({x:bx+co*lx-si*ly,y:by+si*lx+co*ly});
+  let oyA=0, oyB=E2.off?-28:0;
+  if(E2.dA===E2.dB&&!E2.off){oyA=-10;oyB=10;}
+  ctx.save();ctx.translate(bx,by);ctx.rotate(ph);
+  ctx.fillStyle=CSSV('--wood');ctx.strokeStyle=CSSV('--wood-d');ctx.lineWidth=3;rrect(ctx,-bw/2,-bh/2,bw,bh,8);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#5b3a17';ctx.font='700 15px '+F;ctx.textAlign='center';ctx.fillText('나무 도막',0,bh/2-10);
+  ctx.restore();
+  const force=(Fv,d,oy,col,name)=>{
+    const p=toW(d*bw/2,oy), sx=p.x, sy=p.y;
+    if(Fv===0){ctx.fillStyle=col;ctx.font='800 15px '+F;ctx.textAlign='center';ctx.fillText(name+' 0 N',sx+d*36,sy-14);return;}
+    const ex=d>0?C2.W:0;
+    ctx.strokeStyle='rgba(60,60,60,.3)';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,sy);ctx.stroke();ctx.setLineDash([]);
+    const L=Fv*u, tx=sx+d*L, gw=86, gx=sx+d*(L+28)+(d>0?0:-gw);
+    ctx.fillStyle='#fff';ctx.strokeStyle=col;ctx.lineWidth=2.5;rrect(ctx,gx,sy-15,gw,30,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle=col;ctx.font='900 16px '+F;ctx.textAlign='center';ctx.fillText(name+'  '+Fv+' N',gx+gw/2,sy+6);
+    drawArrow(ctx,sx,sy,tx,sy,col,8);
+    ctx.fillStyle='#1d2433';ctx.beginPath();ctx.arc(sx,sy,5.5,0,Math.PI*2);ctx.fill();
+  };
+  if(E2.off){const a=toW(E2.dA*bw/2,oyA),b=toW(E2.dB*bw/2,oyB);ctx.setLineDash([3,4]);ctx.lineWidth=1.5;ctx.strokeStyle='rgba(228,87,46,.55)';ctx.beginPath();ctx.moveTo(0,a.y);ctx.lineTo(C2.W,a.y);ctx.stroke();ctx.strokeStyle='rgba(15,157,138,.55)';ctx.beginPath();ctx.moveTo(0,b.y);ctx.lineTo(C2.W,b.y);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#a52d2d';ctx.font='800 16px '+F;ctx.textAlign='center';ctx.fillText('⚠ 두 힘의 작용선(점선)이 어긋나 있어요',C2.W/2,60);}
+  force(E2.FA,E2.dA,oyA,CSSV('--fa'),'A');
+  force(E2.FB,E2.dB,oyB,CSSV('--fb'),'B');
+  const n=netF(), ny=282;
+  ctx.fillStyle=CSSV('--net');ctx.font='900 17px '+F;ctx.textAlign='center';
+  if(n!==0){drawArrow(ctx,bx,ny,bx+n*u,ny,CSSV('--net'),9);ctx.fillText('합력(알짜힘) '+Math.abs(n)+' N',bx+n*u/2,ny+34);}
+  else{ctx.beginPath();ctx.arc(bx,ny,8,0,Math.PI*2);ctx.fill();ctx.fillText('합력(알짜힘) 0 N',bx,ny+34);}
+  if(E2.hitWall){ctx.fillStyle='#8a5600';ctx.font='800 16px '+F;ctx.textAlign='center';ctx.fillText('끝까지 움직였어요! “물체 제자리”를 눌러 다시 놓아 보세요.',C2.W/2,32);}
+}
+function recordE2(){
+  const n=netF(),st=e2State();
+  E2.rec.push({a:E2.FA+' N '+(E2.dA<0?'←':'→'),b:E2.FB+' N '+(E2.dB<0?'←':'→'),l:E2.off?'어긋남':'일직선',n:Math.abs(n)+' N'+(n?(n>0?' →':' ←'):''),r:st==='eq'?'⚖️ 평형':st==='rot'?'🔄 돎(평형 아님)':'➡️ 움직임'});
+  if(E2.rec.length>20)E2.rec.shift(); lsSet('rec2',E2.rec); renderRec2();
+}
+function renderRec2(){
+  const tb=$('#e2Rec'); if(!E2.rec.length){tb.innerHTML='<tr><td colspan="6" class="muted">아직 기록이 없어요. 여러 조건을 기록해 공통점을 찾아보세요.</td></tr>';return;}
+  tb.innerHTML=E2.rec.map((r,i)=>'<tr><td>'+(i+1)+'</td><td style="color:#e4572e;font-weight:800">'+r.a+'</td><td style="color:#0f9d8a;font-weight:800">'+r.b+'</td><td>'+r.l+'</td><td style="color:#8a3ffc;font-weight:800">'+r.n+'</td><td>'+r.r+'</td></tr>').join('');
+}
+
+/* ================= 관찰 기록 저장 ================= */
+function initNotes(){
+  $$('textarea.note').forEach(t=>{
+    const k=t.dataset.key; t.value=lsGet('note-'+k,'');
+    let tm; t.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(()=>{lsSet('note-'+k,t.value);const s=$('.saved[data-for="'+k+'"]');if(s){s.classList.add('on');setTimeout(()=>s.classList.remove('on'),1200);}},400);});
+  });
+}
+
+/* ================= 스티커 붙이기 ================= */
+const BOARDS={
+  b1:{cap:1,need:4,
+    stickers:[
+      {id:'p',label:'힘의 작용점',answer:'pt',hints:['화살표가 시작하는 점이에요.','힘이 물체에 작용한 곳 = 화살표의 꼬리 부분!']},
+      {id:'d',label:'힘의 방향',answer:'dir',hints:['화살표 머리가 가리키는 쪽이에요.','화살촉 근처 빈칸이에요.']},
+      {id:'l',label:'힘의 크기',answer:'len',hints:['화살표의 무엇이 힘의 크기에 비례할까요?','화살표의 길이 = 힘의 크기. 길이 표시 아래 빈칸이에요.']},
+      {id:'u',label:'N (뉴턴)',answer:'unit',hints:['숫자 4 옆에 붙는 것은 무엇일까요?','힘의 크기를 나타내는 단위예요.']},
+      {id:'k',label:'kg (킬로그램)',answer:null,trap:true,hints:['kg은 무엇의 단위였나요?','kg은 질량의 단위예요. 힘의 단위는 N이에요 — 이 스티커는 붙이지 않아요.']}
+    ]},
+  b2:{cap:99,need:8,
+    stickers:[
+      {id:'c1',label:'🪢 줄다리기: 양쪽이 5 N씩 당겨 줄이 멈춤',answer:'eq',hints:['두 힘의 크기와 방향을 비교해 보세요.','크기 같고, 방향 반대, 일직선 → 알짜힘 0']},
+      {id:'c2',label:'💡 천장에 매달려 가만히 있는 전등',answer:'eq',hints:['전등이 멈춰 있어요. 힘이 없어서일까요?','줄이 위로 당기는 힘과 아래로 당기는 힘이 같아요.']},
+      {id:'c3',label:'📚 책상 위에 가만히 놓인 책',answer:'eq',hints:['멈춰 있다고 힘이 없는 게 아니에요.','책을 아래로 당기는 힘과 책상이 떠받치는 힘이 평형이에요.']},
+      {id:'c4',label:'💪 팔씨름: 두 팔이 한가운데서 멈춤',answer:'eq',hints:['팔이 어느 쪽으로도 넘어가지 않아요.','두 사람의 힘이 크기가 같고 방향이 반대예요.']},
+      {id:'c5',label:'🪢 한쪽이 더 세게 당겨 줄이 끌려감',answer:'neq',hints:['줄이 움직였어요!','크기가 다르면 알짜힘이 0이 아니에요.']},
+      {id:'c6',label:'📦 두 사람이 같은 방향으로 상자를 당김',answer:'neq',hints:['두 힘의 방향이 어떤가요?','같은 방향이면 합력 = 두 힘의 합 → 상자가 움직여요.']},
+      {id:'c7',label:'⛳ 정지한 골프공을 쳐서 공이 날아감',answer:'neq',hints:['공의 운동 상태가 변했나요?','운동 상태가 변했다 = 알짜힘이 작용했다.']},
+      {id:'c8',label:'↪️ 크기는 같고 방향은 반대지만 작용선이 어긋나 판이 돎',answer:'neq',hints:['평형 조건 세 가지를 모두 만족하나요?','일직선상 조건을 어겨서 물체가 돌아가요.']},
+      {id:'t1',label:'작용·반작용',answer:null,trap:true,hints:['이것은 상황 카드가 아니라 다른 개념의 이름이에요.','작용·반작용은 서로 다른 두 물체에 작용해요. 한 물체의 평형과 달라 붙이지 않아요.']}
+    ]}
+};
+const SB={};
+function initStickers(){
+  Object.keys(BOARDS).forEach(k=>{const s=lsGet('stk-'+k,null);SB[k]={placed:(s&&s.placed)||{},tries:(s&&s.tries)||0,hint:{},marks:{},picked:null,order:shuffle(BOARDS[k].stickers.map(x=>x.id))};});
+  $$('.board .slot').forEach(sl=>sl.addEventListener('click',()=>{
+    const bk=sl.closest('.board').id.replace('board-',''), st=SB[bk];
+    if(!st.picked) return;
+    const cfg=BOARDS[bk], slot=sl.dataset.slot;
+    if(cfg.cap===1){Object.keys(st.placed).forEach(id=>{if(st.placed[id]===slot)delete st.placed[id];});}
+    st.placed[st.picked]=slot; delete st.marks[st.picked]; st.picked=null; saveBoard(bk); renderBoard(bk);
+  }));
+}
+function saveBoard(k){lsSet('stk-'+k,{placed:SB[k].placed,tries:SB[k].tries});}
+function stickerEl(bk,s,i,inSlot){
+  const st=SB[bk], b=document.createElement('button');
+  b.className='sticker'+(bk==='b2'?' card2':'')+(st.picked===s.id?' picked':'')+(st.marks[s.id]?' '+st.marks[s.id]:'');
+  if(!inSlot) b.style.setProperty('--tilt',(((i*37)%7)-3)+'deg');
+  b.textContent=s.label;
+  b.onclick=e=>{if(inSlot&&st.picked)return; e.stopPropagation();
+    if(inSlot){delete st.placed[s.id];delete st.marks[s.id];st.picked=null;saveBoard(bk);}
+    else st.picked=st.picked===s.id?null:s.id;
+    renderBoard(bk);};
+  return b;
+}
+function renderBoard(bk){
+  const cfg=BOARDS[bk], st=SB[bk], tray=$('#tray-'+bk);
+  $$('#tray-'+bk+' .sticker').forEach(e=>e.remove());
+  st.order.forEach((id,i)=>{const s=cfg.stickers.find(x=>x.id===id);if(!st.placed[id])tray.appendChild(stickerEl(bk,s,i,false));});
+  $$('#board-'+bk+' .slot').forEach(sl=>{
+    const slot=sl.dataset.slot; sl.innerHTML='';
+    const here=cfg.stickers.filter(s=>st.placed[s.id]===slot);
+    here.forEach((s,i)=>sl.appendChild(stickerEl(bk,s,i,true)));
+    if(!here.length) sl.textContent=bk==='b2'?'여기에 붙이세요':'?';
+    sl.classList.toggle('ready',!!st.picked);
+  });
+  const placedOk=cfg.stickers.filter(s=>s.answer&&st.placed[s.id]).length;
+  $('#'+bk+'Count').textContent='붙인 스티커 '+Object.keys(st.placed).length+' / '+cfg.need;
+  $('#'+bk+'Try').textContent='시도 '+st.tries+'회';
+  const h=$('#hints-'+bk);
+  h.innerHTML=Object.keys(st.hint).filter(id=>st.hint[id]>0).map(id=>{const s=cfg.stickers.find(x=>x.id===id);return '<div>💡 <b>'+s.label+'</b> — '+s.hints[Math.min(st.hint[id],s.hints.length)-1]+'</div>';}).join('');
+  $('#done-'+bk).classList.toggle('on',isDone(bk));
+}
+function isDone(bk){const cfg=BOARDS[bk],st=SB[bk];return cfg.stickers.every(s=>s.answer?st.placed[s.id]===s.answer:!st.placed[s.id]);}
+function checkBoard(bk){
+  const cfg=BOARDS[bk], st=SB[bk]; st.tries++; st.picked=null;
+  const wrong=[];
+  cfg.stickers.forEach(s=>{
+    const p=st.placed[s.id];
+    if(!p){ if(s.answer){st.hint[s.id]=Math.max(st.hint[s.id]||0,0);} return; }
+    if(p===s.answer){st.marks[s.id]='good';st.hint[s.id]=0;}
+    else{st.marks[s.id]='bad';st.hint[s.id]=Math.min((st.hint[s.id]||0)+1,s.hints.length);wrong.push(s.id);}
+  });
+  const missing=cfg.stickers.filter(s=>s.answer&&!st.placed[s.id]).length;
+  if(!wrong.length&&!missing) st.hint={};
+  saveBoard(bk); renderBoard(bk);
+  if(wrong.length) setTimeout(()=>{wrong.forEach(id=>{delete st.placed[id];delete st.marks[id];});saveBoard(bk);renderBoard(bk);},900);
+  if(!wrong.length&&missing){const h=$('#hints-'+bk);h.insertAdjacentHTML('afterbegin','<div>👍 붙인 스티커는 모두 맞았어요! 아직 붙이지 않은 스티커가 '+missing+'장 남았어요.</div>');}
+}
+function resetBoard(bk){SB[bk]={placed:{},tries:0,hint:{},marks:{},picked:null,order:shuffle(BOARDS[bk].stickers.map(x=>x.id))};saveBoard(bk);renderBoard(bk);}
+
+/* ================= 실생활 ================= */
+const LIFE=[
+  ['🪢','줄다리기','양 팀이 같은 크기의 힘으로 반대 방향으로 당기면 줄은 멈춰 있어요. 한 팀의 힘이 더 커지는 순간 알짜힘이 생겨 줄이 끌려가요.','힘의 평형 · 합력'],
+  ['💡','천장에 매달린 전등','전등이 떨어지지 않고 멈춰 있는 것은 줄이 위로 당기는 힘과 지구가 아래로 당기는 힘(3차시 ‘중력’)이 평형을 이루기 때문이에요.','멈춰 있어도 힘은 작용'],
+  ['📚','책상 위의 책','책은 가만히 있지만 힘이 없는 게 아니에요. 아래로 당기는 힘과 책상이 위로 떠받치는 힘이 크기가 같고 방향이 반대예요.','오개념 바로잡기'],
+  ['🛗','엘리베이터 케이블','엘리베이터가 멈춰 있거나 일정한 빠르기로 움직일 때, 케이블이 당기는 힘과 아래로 당기는 힘이 평형을 이뤄요.','알짜힘 0'],
+  ['🧗','암벽 등반 로프','매달려 쉬는 등반가를 로프가 위로 당겨 줘요. 두 힘이 한 직선 위에서 평형을 이루어 등반가가 안전하게 멈춰 있어요.','일직선상 조건'],
+  ['🌉','다리의 케이블','사장교의 케이블은 다리 상판을 비스듬히 당겨 떠받쳐요. 공학자는 여러 힘을 화살표로 그려 평형이 되도록 설계해요.','힘의 화살표 표현'],
+  ['💪','팔씨름','두 사람의 팔이 한가운데서 멈춰 있을 때는 서로 미는 힘의 크기가 같아요. 한 사람이 더 세게 밀면 팔이 넘어가요.','크기 같고 방향 반대'],
+  ['📦','무거운 짐 함께 끌기','혼자서는 꿈쩍 않던 상자도 둘이 같은 방향으로 끌면 움직여요. 같은 방향의 두 힘은 더해져 합력이 커지기 때문이에요.','같은 방향의 합력']
+];
+function buildLife(){$('#lifeGrid').innerHTML=LIFE.map(l=>'<div class="card"><div class="ico">'+l[0]+'</div><h3>'+l[1]+'</h3><p>'+l[2]+'</p><span class="tag">🔗 '+l[3]+'</span></div>').join('');}
+
+/* ================= 개념 확인 문제 ================= */
+const qArrowFig=(()=>{let s='<svg viewBox="0 0 600 150">'+gridSvg(600,150,30);s+='<rect x="330" y="45" width="90" height="60" rx="6" fill="#d9a15f"/>'+svgArrow(330,75,210,75,'#e4572e',7,'');s+='<circle cx="330" cy="75" r="6" fill="#1d2433"/><text x="20" y="25" font-size="15" font-weight="800" fill="#5d667a">1칸 = 2 N</text></svg>';return s;})();
+const qThreeFig=(()=>{let s='<svg viewBox="0 0 600 130">'+gridSvg(600,130,30);s+='<rect x="255" y="35" width="90" height="60" rx="6" fill="#d9a15f"/>'+svgArrow(345,65,435,65,'#e4572e',7,'3 N')+svgArrow(255,55,225,55,'#0f9d8a',6,'1 N',45)+svgArrow(255,78,195,78,'#8a3ffc',6,'? N',108);s+='</svg>';return s;})();
+const QUIZ=[
+  {t:'개념 이해',q:'과학에서 말하는 ‘힘’의 뜻으로 가장 알맞은 것은?',c:['물체의 모양이나 운동 상태를 변하게 하는 원인','물체가 가진 무게 그 자체','사람이 일을 할 때 느끼는 피로','물체가 차지하는 공간의 크기'],a:0,e:'과학에서 힘은 물체의 모양이나 운동 상태(빠르기, 운동 방향)를 변하게 하는 원인이에요.'},
+  {t:'개념 이해',q:'힘을 화살표로 나타낼 때, 화살표의 시작점이 뜻하는 것은?',c:['힘의 작용점','힘의 크기','힘의 단위','물체의 질량'],a:0,e:'화살표는 힘이 작용한 곳, 즉 작용점에서 시작해요. 방향은 화살표의 방향, 크기는 화살표의 길이로 나타내요.'},
+  {t:'자료 해석',q:'그림은 물체에 작용하는 힘을 화살표로 나타낸 것이다. 이 힘의 크기와 방향은?',fig:qArrowFig,c:['8 N, 왼쪽','4 N, 왼쪽','8 N, 오른쪽','2 N, 왼쪽'],a:0,e:'화살표 길이는 4칸이고 1칸 = 2 N이므로 4 × 2 = 8 N이에요. 화살표가 왼쪽을 가리키므로 방향은 왼쪽이에요.'},
+  {t:'적용',q:'모눈 1칸 = 1 N으로 정하고 3 N의 힘을 3칸으로 그렸다. 같은 축척으로 6 N의 힘을 그리면 화살표 길이는?',c:['6칸 (2배)','3칸 (같음)','1.5칸 (절반)','9칸 (3배)'],a:0,e:'화살표의 길이는 힘의 크기에 비례해요. 힘이 2배가 되면 화살표 길이도 2배인 6칸이 돼요.'},
+  {t:'적용',q:'한 물체에 5 N의 힘과 2 N의 힘이 같은 방향으로 작용할 때 합력은?',c:['7 N, 두 힘과 같은 방향','3 N, 5 N의 힘 방향','10 N, 두 힘과 같은 방향','0 N'],a:0,e:'같은 방향으로 작용하는 두 힘의 합력 = 두 힘의 합(5 + 2 = 7 N), 방향은 두 힘의 방향과 같아요.'},
+  {t:'적용',q:'한 물체에 오른쪽으로 5 N, 왼쪽으로 2 N의 힘이 작용할 때 합력은?',c:['3 N, 오른쪽','3 N, 왼쪽','7 N, 오른쪽','7 N, 왼쪽'],a:0,e:'반대 방향으로 작용하는 두 힘의 합력 = 큰 힘 − 작은 힘(5 − 2 = 3 N), 방향은 큰 힘의 방향(오른쪽)이에요.'},
+  {t:'통합',q:'그림처럼 한 물체에 세 힘이 나란하게 작용하여 힘의 평형을 이룬다. ?에 알맞은 힘의 크기는?',fig:qThreeFig,c:['2 N','3 N','4 N','1 N'],a:0,e:'오른쪽 3 N과 왼쪽 힘들의 합이 같아야 알짜힘이 0이에요. 1 N + ? = 3 N 이므로 ? = 2 N이에요.'},
+  {t:'개념 이해',q:'한 물체에 작용하는 두 힘이 평형을 이루는 조건으로 옳지 않은 것은?',c:['두 힘의 방향이 같다.','두 힘의 크기가 같다.','두 힘의 방향이 반대이다.','두 힘이 일직선상에서 작용한다.'],a:0,e:'평형 조건은 ① 크기가 같고 ② 방향이 반대이며 ③ 일직선상에 있어야 해요. 방향이 같으면 합력이 더해져 물체가 움직여요.'},
+  {t:'오개념',q:'책상 위에 가만히 놓인 책에 대한 설명으로 옳은 것은?',c:['책에 여러 힘이 작용하지만 알짜힘이 0이다.','책이 움직이지 않으므로 책에는 아무런 힘도 작용하지 않는다.','책에 작용하는 힘은 한 방향으로만 작용한다.','책에 작용하는 알짜힘은 책의 무게와 같다.'],a:0,e:'멈춰 있다고 힘이 없는 것이 아니에요. 아래로 당기는 힘과 책상이 떠받치는 힘이 평형을 이루어 알짜힘이 0이에요.'},
+  {t:'오개념',q:'민수가 벽을 미는 힘과 벽이 민수를 미는 힘에 대한 설명으로 옳은 것은?',c:['서로 다른 물체에 작용하므로 힘의 평형 관계가 아니다.','크기가 같고 방향이 반대이므로 힘의 평형이다.','두 힘의 합력은 항상 민수 쪽을 향한다.','벽은 힘을 작용할 수 없다.'],a:0,e:'힘의 평형은 한 물체에 작용하는 두 힘의 관계예요. 이 두 힘은 민수와 벽이라는 서로 다른 물체에 작용하므로(작용·반작용) 평형이 아니에요.'}
+];
+let QS=[],qi=0,qScore=0,qWrong=[],qAnswered=false,qStart=0,qRetry=false,qBase=0;
+function startQuiz(){QS=shuffle(QUIZ).map(q=>prepQ(q));qi=0;qScore=0;qWrong=[];qRetry=false;qBase=0;qStart=Date.now();go(5);renderQ();}
+function prepQ(q){const idx=shuffle(q.c.map((_,i)=>i));return Object.assign({},q,{c:idx.map(i=>q.c[i]),a:idx.indexOf(q.a),orig:q});}
+function renderQ(){
+  qAnswered=false;const q=QS[qi];
+  $('#qNum').textContent=(qRetry?'다시 풀기 ':'문제 ')+(qi+1)+' / '+QS.length;
+  $('#qType').textContent=q.t;$('#qText').textContent=q.q;
+  $('#qFig').innerHTML=q.fig?'<div class="qfig">'+q.fig+'</div>':'';
+  $('#qBar').style.width=(qi/QS.length*100)+'%';
+  const w=$('#qChoices');w.innerHTML='';
+  q.c.forEach((c,i)=>{const b=document.createElement('button');b.className='choice';b.innerHTML='<span class="m">'+(i+1)+'</span><span></span>';b.lastChild.textContent=c;b.onclick=()=>answer(i);w.appendChild(b);});
+  $('#qExpl').className='expl';$('#qNext').style.display='none';
+}
+function answer(i){
+  if(qAnswered)return;qAnswered=true;const q=QS[qi];
+  $$('#qChoices .choice').forEach((b,k)=>{if(k===q.a)b.classList.add('correct');if(k===i&&i!==q.a)b.classList.add('wrong');});
+  const ok=i===q.a; if(ok)qScore++; else qWrong.push(q.orig);
+  const e=$('#qExpl');e.className='expl show '+(ok?'ok':'no');e.innerHTML='<b>'+(ok?'⭕ 정답이에요!':'❌ 아쉬워요. 정답은 '+(q.a+1)+'번')+'</b><br>'+q.e;
+  $('#qNext').style.display='';$('#qNext').textContent=qi===QS.length-1?'결과 보기 →':'다음 문제 →';
+}
+function nextQ(){qi++;if(qi>=QS.length)showResult();else renderQ();}
+function showResult(){
+  const total=QUIZ.length, score=qRetry?qBase+qScore:qScore;
+  qBase=score;
+  $('#rScore').textContent=score;
+  $('#rMsg').textContent=score>=9?'힘의 표현과 평형을 완벽하게 이해했어요! 👏':score>=7?'잘했어요! 틀린 문제만 한 번 더 확인해요.':score>=5?'조금만 더! 개념과 실험을 다시 살펴볼까요?':'개념 카드와 실험 ②를 다시 해 보고 도전해요.';
+  const sec=Math.round((Date.now()-qStart)/1000);$('#rTime').textContent='걸린 시간 '+Math.floor(sec/60)+'분 '+(sec%60)+'초';
+  $('#rWrongCard').style.display=qWrong.length?'':'none';
+  $('#rWrong').innerHTML=qWrong.map(q=>'<div>❌ '+q.q+'<br><span class="muted">→ '+q.c[q.a]+'</span></div>').join('');
+  $('#rRetry').style.display=qWrong.length?'':'none';
+  $('#qBar').style.width='100%'; go(6);
+}
+function retryWrong(){if(!qWrong.length)return;QS=shuffle(qWrong).map(q=>prepQ(q));qWrong=[];qi=0;qScore=0;qRetry=true;go(5);renderQ();}
+function initChecklist(){$$('[data-ck]').forEach(c=>{c.checked=!!lsGet('ck'+c.dataset.ck,false);c.onchange=()=>lsSet('ck'+c.dataset.ck,c.checked);});}
+
+/* ================= 시작 ================= */
+renderSteps(); buildConceptFigs(); buildLife(); initNotes(); initE1(); initE2(); initStickers(); initChecklist();
+playEffect('clay',$('#effSeg button'));
+window.addEventListener('resize',()=>{drawE1();drawE2();});
+</script>
+</body>
+</html>
